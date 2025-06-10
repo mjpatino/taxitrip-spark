@@ -1,0 +1,7 @@
+mkdir "src"
+mkdir "src/main"
+mkdir "src/main/scala"
+mkdir "src/test"
+mkdir "src/test/scala"
+mkdir "project"
+mkdir "data"

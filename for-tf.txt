@@ -1,0 +1,12 @@
+EC2 :
+
+    amazon Linux arquitectura ARM
+
+    t4g.xlarge
+
+    250GB EBS
+
+
+Elastic IP
+    allow ip to be reassociated
+    available zon
