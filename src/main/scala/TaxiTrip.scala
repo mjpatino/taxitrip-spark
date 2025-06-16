@@ -58,17 +58,44 @@ object TaxiTrip extends TaxiTripInterface {
     )
   }
 
-  def loadAndSave(input_file:String, output_file:String) : Unit = {
+  // def loadAndSave(input_file:String, output_file:String) : Unit = {
+    
+  //   val df = spark.read.parquet(input_file)
+  //   if (df.schema("airport_fee").dataType == IntegerType) {
+  //     df.withColumn("airport_fee", col("airport_fee").cast(DoubleType)).write.parquet(output_file)
+  //   } 
+  //   else
+  //     df.write.parquet(output_file)
+  // }
+    def loadAndSave(input_file:String, output_file:String, save:Boolean) : Unit = {
     
     val df = spark.read.parquet(input_file)
-    if (df.schema("airport_fee").dataType == IntegerType) {
-      df.withColumn("airport_fee", col("airport_fee").cast(DoubleType)).write.parquet(output_file)
-    } 
-    else
-      df.write.parquet(output_file)
+
+
+    val missingCols: Map[String, DataType] = Map(
+      "DOLocationID" -> LongType,
+      "PULocationID" -> LongType,
+      "airport_fee" -> DoubleType
+      // "wav_match_flag" -> BYTE_ARRAY | INT32
+    )
+
+    def ensureColumnsWithTypes(df: DataFrame, expected: Map[String, DataType]): DataFrame = {
+      expected.foldLeft(df) { case (tempDf, (colName, dataType)) =>
+        if (tempDf.columns.contains(colName)) tempDf.withColumn(colName, col(colName).cast(dataType)) // TODO: Validar optimizacion en Catalyst para CAST
+        else tempDf.withColumn(colName, lit(null).cast(dataType))
+      }
+    }
+
+    val finalDf : DataFrame = ensureColumnsWithTypes(df, missingCols)
+
+    if (save) {
+      finalDf.write.parquet(output_file)
+    }
+
+    finalDf
   }
 
-  def parquetSchema( path: String ): Unit = {
+  def parquetSchema( path: String, save: Boolean ): Unit = {
 
     import org.apache.hadoop.fs.{FileSystem, Path}
 
@@ -84,7 +111,7 @@ object TaxiTrip extends TaxiTripInterface {
     println(files.size)
 
 
-    files.foreach{ f => loadAndSave(f,f.replace("raw","staging"))}
+    files.foreach{ f => loadAndSave(f,f.replace("raw","staging"), save)}
 
   }
 
@@ -93,13 +120,13 @@ object TaxiTrip extends TaxiTripInterface {
 
     val file_folder: String = "/home/ec2-user/raw/fhvhv_tripdata"
 
-    parquetSchema( file_folder )
+    parquetSchema( file_folder, true )
 
 
 
-    // val df = spark.read.parquet("/home/ec2-user/new_data/*.parquet")
+    val df = spark.read.parquet("/home/ec2-user/staging/fhvhv_tripdata/*.parquet")
 
-    // val _ = aggByDate(df,true,"/home/ec2-user/proccessed2.parquet")
+    val _ = aggByDate(df,true,"/home/ec2-user/aggByDate.parquet")
 
     
     spark.close()

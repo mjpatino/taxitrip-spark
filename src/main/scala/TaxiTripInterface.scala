@@ -13,7 +13,7 @@ trait TaxiTripInterface {
   def statsByLocation(df: DataFrame, colGroupBy: String): DataFrame
 
 
-  def parquetSchema( path: String ): Unit
+  def parquetSchema( path: String , save: Boolean): Unit
 
 
 

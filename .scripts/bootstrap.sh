@@ -5,9 +5,6 @@ sudo yum update -y
 # OpenJDK 8
 sudo yum install -y java-1.8.0-amazon-corretto
 
-# git
-sudo yun install git -y
-
 # Apache Hadoop
 sudo wget https://downloads.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
 sudo tar -xzf hadoop-3.3.6.tar.gz
@@ -29,7 +26,10 @@ echo 'export SPARK_HOME=/opt/spark' >> ~/.bashrc
 echo 'export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin' >> ~/.bashrc
 
 # Spark properties
-sudo cp spark-defaults.conf /opt/spark/conf/
+sudo cp .scripts/spark-defaults.conf /opt/spark/conf/
+
+# Spark eventLog dir
+echo "mkdir -p /tmp/spark-events" >> ~/.bashrc
 
 # Folder Initialization
 sudo chmod a+x folder-initialization.sh
