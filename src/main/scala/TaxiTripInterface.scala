@@ -8,9 +8,12 @@ trait TaxiTripInterface {
   val spark: SparkSession
   val sc: SparkContext
 
-  def countsByDate(df: DataFrame, save: Boolean = false, path:String): DataFrame
+  def aggByDate(df: DataFrame, save: Boolean = false, path:String): DataFrame
 
   def statsByLocation(df: DataFrame, colGroupBy: String): DataFrame
+
+
+  def parquetSchema( path: String ): Unit
 
 
 

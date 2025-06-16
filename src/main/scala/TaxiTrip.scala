@@ -5,7 +5,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.broadcast.Broadcast
 
 
-
 object TaxiTrip extends TaxiTripInterface {
   
   
@@ -17,13 +16,14 @@ object TaxiTrip extends TaxiTripInterface {
   
   import spark.implicits._
   import org.apache.spark.sql.functions._
+  import org.apache.spark.sql.types._
 
   
 
   val sc = spark.sparkContext
 
 
-  def countsByDate(df: DataFrame, save: Boolean = false, path:String): DataFrame = {
+  def aggByDate(df: DataFrame, save: Boolean = false, path:String): DataFrame = {
 
     val dailyCounts = df
                       .withColumn("year", year($"pickup_datetime"))
@@ -58,33 +58,49 @@ object TaxiTrip extends TaxiTripInterface {
     )
   }
 
+  def loadAndSave(input_file:String, output_file:String) : Unit = {
+    
+    val df = spark.read.parquet(input_file)
+    if (df.schema("airport_fee").dataType == IntegerType) {
+      df.withColumn("airport_fee", col("airport_fee").cast(DoubleType)).write.parquet(output_file)
+    } 
+    else
+      df.write.parquet(output_file)
+  }
+
+  def parquetSchema( path: String ): Unit = {
+
+    import org.apache.hadoop.fs.{FileSystem, Path}
+
+    val fs = FileSystem.get( sc.hadoopConfiguration )
+
+    val dirPath = new Path( s"file://$path"  )
+
+    val files = fs.listStatus(dirPath).map{
+      f => f.getPath().toString()
+    }.toSeq
+
+    files.foreach(println)
+    println(files.size)
+
+
+    files.foreach{ f => loadAndSave(f,f.replace("raw","staging"))}
+
+  }
+
 
   def main(args: Array[String]): Unit = {
-    
 
-    val df = spark.read.parquet("/home/ec2-user/taxitrip-spark/data/fhvhv_tripdata/*.parquet")
+    val file_folder: String = "/home/ec2-user/raw/fhvhv_tripdata"
 
-    val baseBroadcastVar: Broadcast[Map[String, String]]= sc.broadcast(
-      Map(
-        "HV0002" -> "Juno",
-        "HV0003" -> "Uber",
-        "HV0004" -> "Via",
-        "HV0005" -> "Lyft"
-      ))
+    parquetSchema( file_folder )
 
-    val getBaseUDF = udf(
-      (base_id: String) => baseBroadcastVar.value.getOrElse(base_id,base_id)
-    )
 
-    spark.udf.register("getBaseUDF", getBaseUDF)
 
-    val df_2 = df.withColumn("base",call_udf("getBaseUDF", $"hvfhs_license_num"))
+    // val df = spark.read.parquet("/home/ec2-user/new_data/*.parquet")
 
-    baseBroadcastVar.unpersist()
+    // val _ = aggByDate(df,true,"/home/ec2-user/proccessed2.parquet")
 
-    
-
-    val _ = countsByDate(df,true,"/home/ec2-user/proccessed.parquet")
     
     spark.close()
   }

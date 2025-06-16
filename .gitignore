@@ -5,3 +5,4 @@ project/*
 !project/plugins.sbt
 target/
 data/*
+temp.txt

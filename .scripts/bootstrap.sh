@@ -16,7 +16,7 @@ sudo chown -R ec2-user:ec2-user /opt/hadoop
 
 
 echo 'export HADOOP_HOME=/opt/hadoop' >> ~/.bashrc
-echo 'export PATH=$PATH:$HADOOP_HOME/bin:$HADOOP_HOME/sbin' >> ~/.bashrc
+echo 'export PATH=$PATH:$HADOOP_HOME/bin' >> ~/.bashrc
 echo 'export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))' >> ~/.bashrc
 
 # Apache Spark
@@ -27,6 +27,13 @@ sudo chown -R ec2-user:ec2-user /opt/spark
 
 echo 'export SPARK_HOME=/opt/spark' >> ~/.bashrc
 echo 'export PATH=$PATH:$SPARK_HOME/bin:$SPARK_HOME/sbin' >> ~/.bashrc
+
+# Spark properties
+sudo cp spark-defaults.conf /opt/spark/conf/
+
+# Folder Initialization
+sudo chmod a+x folder-initialization.sh
+./folder-initialization.sh
 
 
 # uname -m
